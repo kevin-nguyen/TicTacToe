@@ -1,5 +1,5 @@
 body {
-    background-color: GhostWhite;
+    background-color: #D3D0CB;
 }
 
 div {
@@ -19,14 +19,15 @@ div {
 
 h1 {
     text-align: center;
-    color: snow;
+    color: #1E2019;
     font-size: 3.5rem;
     font-family: 'Impact', 'Charcoal', sans-serif;
-    background-color: midnightblue;
+    background-color: #D3D0CB;
     width: 65%;
     min-width: 375px;
     margin: 0 auto;
 }
+
 .game-box {
     margin: 2em auto 0;
     display: table;
@@ -45,15 +46,16 @@ h1 {
 .game-tile {
     display: table-cell;
     position: relative;
-    background-color: GhostWhite;
+    background-color: #393E41;
     font-size: 2em;
     width: 33%;
     height: 0;
     padding-top: 33%;
-    border-right: 3px black solid;
-    border-bottom: 3px black solid; 
+    border-right: 3px #BEB7DF solid;
+    border-bottom: 3px #BEB7DF solid; 
     min-width: 125px;
     max-width: 150px;
+
 }
 
 .game-tile:hover {
@@ -72,6 +74,7 @@ h1 {
         height: 100%;
         text-align: center; 
         font-size: 5em;
+        color: #F0F3FF;
 }
 
 #row-3 .game-tile {
@@ -116,7 +119,8 @@ h1 {
 
 .reset {
     display: table;
-    background-color: lightgrey;
+    background-color: #587B7F;
+    color: snow;
     width: 65%;
     margin: 0 auto;
     padding: .5em 0;
