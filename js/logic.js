@@ -22,12 +22,12 @@ $(document).ready(function () {
                 var $tile = $('#' + tilePosition);
                 $tile.text(value.data); 
             } 
-            else if (mode === 'scoreX') {
+            else if (mode === 'scorePlayer') {
                 $scores = $('.player-score');
                 var score = parseInt($scores.first().text(), 10);
 
                 $scores.first().text("" + (score + 1));
-            } else if (mode === 'scoreO') {
+            } else if (mode === 'scoreAI') {
                 $scores = $('.player-score');
                 var score = parseInt($scores.last().text(), 10);
 
@@ -36,9 +36,15 @@ $(document).ready(function () {
         };
 
         this.highlightWin = function highlightWin(winningRowArray) {
-            winningRowArray.forEach(function(element) {
-                $('#' + numberToString[element]).addClass('win-color');
-            })
+            if (winningRowArray.length === 3) {
+                winningRowArray.forEach(function(element) {
+                    $('#' + numberToString[element]).addClass('win-color');
+                })
+            } else if (winningRowArray.length === 9) {
+                winningRowArray.forEach(function(element, index) {
+                    $('#' + numberToString[index]).addClass('win-color');
+                })
+            }
         };
 
     };
@@ -48,21 +54,21 @@ $(document).ready(function () {
         @param Number position - player inputted position for this state
         @param State prevState - a previous state this state can build off of
     */
-    function State(position, prevState) {
+    function State(position, prevState, characterSelection) {
         this.boardState = [null, null, null, null, null, null, null, null, null];
         this.gameOver = false;
         this.minmaxScore = null;
-        this.player = 'X';
+        this.player = characterSelection === undefined ? 'X' : characterSelection;
         this.AITurnNumber = 0;
         this.winningRow = [];
         this.positionAdded = position;
 
-        /*  X - X wins
-            0 - O wins
+        /*  P - Player wins
+            A - AI wins
             T - Tie
-            P - Game in progress
+            G - Game in progress
         */
-        this.status = 'P';
+        this.status = 'G';
 
         if (prevState !== undefined && !prevState.gameOver) {
             this.boardState = prevState.boardState.slice(); 
@@ -98,11 +104,7 @@ $(document).ready(function () {
                     this.winningRow.push(i+3);
                     this.winningRow.push(i+6);
 
-                    if (this.player === 'X') {
-                        this.status = 'X';
-                    } else {
-                        this.status = 'O';
-                    }
+                    this.status = this.player === playerCharacter ? 'P' : 'A';
 
                     return true;
                 }
@@ -119,11 +121,7 @@ $(document).ready(function () {
                     this.winningRow.push(j+1);
                     this.winningRow.push(j+2);
 
-                    if (this.player === 'X') {
-                        this.status = 'X';
-                    } else {
-                        this.status = 'O';
-                    }
+                    this.status = this.player === playerCharacter ? 'P' : 'A';
 
                     return true;
                 }
@@ -138,11 +136,7 @@ $(document).ready(function () {
                 this.winningRow.push(4);
                 this.winningRow.push(8);
 
-                if (this.player === 'X') {
-                    this.status = 'X';
-                } else {
-                    this.status = 'O';
-                }
+                this.status = this.player === playerCharacter ? 'P' : 'A';
 
                 return true;
             }
@@ -156,11 +150,7 @@ $(document).ready(function () {
                 this.winningRow.push(4);
                 this.winningRow.push(6);
 
-                if (this.player === 'X') {
-                    this.status = 'X';
-                } else {
-                    this.status = 'O';
-                }
+                this.status = this.player === playerCharacter ? 'P' : 'A';
 
                 return true;
             }
@@ -242,14 +232,14 @@ $(document).ready(function () {
         @return State - returns the optimal next state the AI sould make
     */
     function minMax(state) {
-        /* NOTE: state variable holds previous player's turn 
+        /* NOTE: 'state' variable holds previous player's turn 
             MinMax logic flipped to account for correct player's min/max choice */
         var minmaxScore;
 
         if (state.gameOver) {
-            if (state.status === 'X') {
+            if (state.status === 'P') {
                 minmaxScore = 10 - state.AITurnNumber;
-            } else if (state.status === 'O') {
+            } else if (state.status === 'A') {
                 minmaxScore = -10 + state.AITurnNumber;
             } else if (state.status === 'T') {
                 minmaxScore = 0;
@@ -258,7 +248,7 @@ $(document).ready(function () {
             return minmaxScore;
         } else {
             // Initial comparison scores
-            if (state.player === 'X') {
+            if (state.player === playerCharacter) {
                 minmaxScore = 100;
             } else {
                 minmaxScore = -100;
@@ -272,7 +262,7 @@ $(document).ready(function () {
             nextStates.forEach(function(nextState) {
                 var currentScore = minMax(nextState);
 
-                if (state.player === 'X') {
+                if (state.player === playerCharacter) {
                     if (currentScore < minmaxScore) {
                         minmaxScore = currentScore;
                     }
@@ -326,13 +316,13 @@ $(document).ready(function () {
             return nextMove;
         });
 
-        if (prevState.player === 'X') {
-            // Current player is 'O' -- wants to minimize score for 'X'
+        if (prevState.player === playerCharacter) {
+            // Current player is AI -- wants to minimize score for Player
             nextStates.sort(function(state1, state2) {
                 return state1.minmaxScore - state2.minmaxScore;
             });
         } else {
-            // Current player is 'X' -- wants to maximize score for 'X'
+            // Current player is Player -- wants to maximize score for Player
             nextStates.sort(function(state1, state2) {
                 return state2.minmaxScore - state1.minmaxScore;
             });
@@ -345,67 +335,75 @@ $(document).ready(function () {
 
     function ScoreRecord() {
         var score = {
-                    "X": 0,
-                    "O": 0
+                    "P": 0,
+                    "A": 0
                     };
 
-        this.increaseScoreX = function increaseScoreX() {
-            score.X = score.X + 1;
+        this.increaseScorePlayer = function increaseScorePlayer() {
+            score.P += 1;
         };
 
-        this.increaseScoreO = function increaseScoreO() {
-            score.O = score.O + 1;
+        this.increaseScoreAI = function increaseScoreAI() {
+            score.A += 1;
         };
 
-        this.getScoreX = function getScoreX() {
-            return score.X;
+        this.getScorePlayer = function getScorePlayer() {
+            return score.P;
         }
 
-        this.getScoreO = function getScoreO() {
-            return score.O;
+        this.getScoreAI = function getScoreAI() {
+            return score.AI;
         }
 
         this.resetScore = function resetScore() {
-            score.X = 0;
-            score.O = 0;
+            score.P = 0;
+            score.A = 0;
         };
     }
 
     var UI = new GameUI();
     var score = new ScoreRecord();
     var game = null;
+    var playerCharacter = null;
+    var $overlay = null;
+
 
     $tiles.click(function(event) {
         var $that = $(this);
 
         if ($that.text() === '' && (game === null || !game.gameOver)) {
-            game = (game === null) ? new State($that.attr("id")) : new State($that.attr("id"), game);
+            game = (game === null) ? new State($that.attr("id"), undefined, playerCharacter) : new State($that.attr("id"), game);
 
-            UI.print('user Play', {tile: $that, data: 'X'});
+            UI.print('user Play', {tile: $that, data: game.player});
+
+            if (!game.gameOver) {
+                game = aiTurn(game);
+
+                UI.print('ai Play', {tile: game, data: game.player});
+            }
 
             if (game.gameOver) {
-                //highlight winning play and set score
-                
-                if (game.status === 'X') {
+                if (game.status === 'T') {
+                    UI.highlightWin(game.boardState);
+                } else {
                     UI.highlightWin(game.winningRow);
-                    score.increaseScoreX();
-                    UI.print('scoreX', score.getScoreX());
-                }
-            } else {
-                game = aiTurn(game);
-                //game = game.AITurnNumber > 0 ? aiTurn(game) : aiFirstTurn(game);
-                UI.print('ai Play', {tile: game, data: 'O'});
 
-                if (game.gameOver) {
-                    //highlight winning play and set score
-                    if (game.status === 'O') {
-                        UI.highlightWin(game.winningRow);
-                        score.increaseScoreO();
-                        UI.print('scoreO', score.getScoreO());
-                    } 
+                    if (game.status === 'P') {
+                        score.increaseScorePlayer();
+                        UI.print('scorePlayer', score.getScorePlayer());
+                    } else if (game.status === 'A') {
+                        score.increaseScoreAI();
+                        UI.print('scoreAI', score.getScoreAI());
+                    }
                 }
             }
         }
+    });
+
+    $(".character-choice").click(function() {
+        var $that = $(this);
+        playerCharacter = $that.text(); 
+        $overlay = $('.overlay').detach();
     });
 
     $(".reset").click(function(event) {

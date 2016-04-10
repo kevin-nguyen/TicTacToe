@@ -6,5 +6,5 @@ This is a Tic-Tac-Toe game versus an artificial intelligence running on the Min-
 * Implement alpha-beta pruning
 * Add two-players option
 * View past games
-* Choice of being X or O
+
 
